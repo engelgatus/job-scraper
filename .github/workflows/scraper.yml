@@ -10,12 +10,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      # NEW: Download previous tracking file  
+      - name: Download sent jobs tracker
+        uses: actions/download-artifact@v4
+        with:
+          name: sent-jobs-tracker
+          path: .
+        continue-on-error: true  # Won't exist on first run
+      
       - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+          
       - name: Install dependencies
         run: pip install -r requirements.txt
+        
       - name: Run scraper
         env:
           JOB_WEBHOOK_URL: ${{ secrets.JOB_WEBHOOK_URL }}
         run: python scraper.py
+        
+      # NEW: Save tracking file for next run
+      - name: Upload sent jobs tracker
+        uses: actions/upload-artifact@v4
+        with:
+          name: sent-jobs-tracker
+          path: sent_jobs.json
+        if: always()  # Upload even if scraper fails
